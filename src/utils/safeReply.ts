@@ -1,68 +1,47 @@
-// src/utils/safeReply.ts
+import { InteractionReplyOptions, MessageFlags, RepliableInteraction } from 'discord.js';
 
-import {
-    CommandInteraction,
-    InteractionReplyOptions,
-    InteractionResponse,
-    Message,
-    MessageFlags
-} from 'discord.js';
-
-type SafeReplyPayload = string | (InteractionReplyOptions & { ephemeral?: boolean });
+type SafeReplyPayload = string | InteractionReplyOptions;
 
 export default async function safeReply(
-    interaction: CommandInteraction | any, 
-    payload: SafeReplyPayload,
-): Promise<void | Message | InteractionResponse> {
+  interaction: RepliableInteraction,
+  payload: SafeReplyPayload,
+  ephemeralOverride?: boolean
+): Promise<any> {
     if (!payload) return;
 
-    let data: InteractionReplyOptions & { ephemeral?: boolean };
-    
+    let data: InteractionReplyOptions;
     if (typeof payload === 'string') {
-        data = { content: payload, ephemeral: true };
+        data = { content: payload, ephemeral: ephemeralOverride ?? true };
     } else {
         data = { ...payload };
-        if (data.ephemeral === undefined) data.ephemeral = true;
+        if (ephemeralOverride !== undefined) {
+            data.ephemeral = ephemeralOverride;
+        } else if (data.ephemeral === undefined) {
+            data.ephemeral = true;
+        }
     }
 
-    // FIX: Lógica de Flags sin usar MessageFlags.resolve (Soluciona Error 2339)
-    if (data.ephemeral) {
-        let currentFlags: number = 0;
-        
-        if (data.flags) {
-            // Convertimos la BitFieldResolvable a number directamente.
-            // Esto es compatible con Discord.js y evita el error de tipado.
-            currentFlags = Number(data.flags); 
-        }
-
-        // Combinamos los flags existentes con MessageFlags.Ephemeral
-        data.flags = currentFlags | MessageFlags.Ephemeral; 
-        delete data.ephemeral; 
-    } else if (data.ephemeral === false) {
-        delete data.ephemeral;
+    if (data.ephemeral && !data.flags) {
+        data.flags = MessageFlags.Ephemeral;
     }
 
     try {
-        if (!interaction) {
-            console.error('❌ safeReply: Interacción nula');
-            return;
-        }
-        
-        const replyOptions: InteractionReplyOptions = data;
+        if (!interaction) return console.error('❌ safeReply: Interacción nula');
 
         if (interaction.replied) {
-            return await interaction.followUp(replyOptions);
+            return await interaction.followUp(data as any);
         }
 
         if (interaction.deferred) {
-            return await interaction.editReply(replyOptions);
+            return await interaction.editReply(data as any);
         }
 
-        return await interaction.reply(replyOptions);
+        return await interaction.reply(data as any);
 
-    } catch (err) {
-        if (err instanceof Error && ('code' in err) && (err.code !== 10062 && err.code !== 40060)) {
-            console.error('⚠️ Error en safeReply:', (err as Error).message);
+    } catch (err: any) {
+        if (err.code !== 10062 && err.code !== 40060) {
+            console.error('⚠️ Error en safeReply:', err.message);
         }
     }
 }
+

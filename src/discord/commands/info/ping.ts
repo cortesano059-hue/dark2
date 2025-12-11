@@ -1,64 +1,41 @@
-// src/discord/commands/info/ping.ts
+import { SlashCommandBuilder, ChatInputCommandInteraction } from 'discord.js';
+import mongoose from "mongoose";
+import safeReply from "@src/utils/safeReply";
+import Embed from "@src/utils/ThemedEmbed";
+import MyClient from "@structures/MyClient.js";
 
-import {
-    ChatInputCommandInteraction,
-    Client, // Tipos necesarios para el retorno de safeReply
-    InteractionResponse,
-    Message,
-    SlashCommandBuilder,
-    SlashCommandOptionsOnlyBuilder,
-} from 'discord.js';
-
-import safeReply from '../../../utils/safeReply.js';
-import ThemedEmbed from '../../../utils/ThemedEmbed.js';
-
-// FIX: Corregido el tipo de retorno de execute para incluir Message | InteractionResponse | void
-interface Command {
-    data: SlashCommandBuilder | SlashCommandOptionsOnlyBuilder; 
-    execute: (
-        interaction: ChatInputCommandInteraction, 
-        client: Client
-    ) => Promise<void | Message | InteractionResponse>;
-}
-
-const PingCommand: Command = {
+export default {
     data: new SlashCommandBuilder()
         .setName('ping')
-        .setDescription('Muestra la latencia del bot y el tiempo en línea.'),
+        .setDescription('Muestra la latencia del bot y la base de datos.'),
 
-    async execute(interaction, client) {
-        const startTimestamp = Date.now();
-        // Ponemos ephemeral: false para que el bot edite su respuesta visible
-        await interaction.deferReply({ ephemeral: false }); 
+    async execute(interaction: ChatInputCommandInteraction, client: MyClient): Promise<void> {
+        await interaction.deferReply();
 
-        // 1. Latencia de la API de Discord (WebSocket Ping)
-        const apiPing: number = Math.abs(client.ws.ping); 
+        const start = Date.now();
+        let dbLatency = "Desconectada";
 
-        // 2. Uptime del bot
-        const uptime: number = client.uptime || 0;
-        const totalSeconds = Math.floor(uptime / 1000);
-        const days = Math.floor(totalSeconds / (60 * 60 * 24));
-        const hours = Math.floor((totalSeconds % (60 * 60 * 24)) / (60 * 60));
-        const minutes = Math.floor((totalSeconds % (60 * 60)) / 60);
-        const seconds = Math.floor(totalSeconds % 60);
-        const uptimeString = `${days}d ${hours}h ${minutes}m ${seconds}s`;
+        try {
+            await mongoose.connection.db.admin().ping();
+            dbLatency = `${Date.now() - start}ms`;
+        } catch (err) {
+            console.error('❌ Error al hacer ping a MongoDB:', err);
+            dbLatency = "Error";
+        }
 
+        const uptime = client.uptime;
+        const uptimeString = `${Math.floor(uptime / 86400000)}d ${Math.floor((uptime % 86400000) / 3600000)}h ${Math.floor((uptime % 3600000) / 60000)}m ${Math.floor((uptime % 60000) / 1000)}s`;
 
-        // 3. Latencia del Bot
-        const botLatency: number = Date.now() - startTimestamp;
-
-        // 4. Embed Final
-        const embed = new ThemedEmbed()
-            .setThumbnail(client.user?.displayAvatarURL({ forceStatic: false, size: 64 }) || null)
+        const embed = new Embed(interaction)
+            .setThumbnail(client.user!.displayAvatarURL({ forceStatic: false, size: 64 }))
             .addFields([
-                { name: 'Ping de la API (WS)', value: `> \`${apiPing}ms\``, inline: true },
-                { name: 'Latencia del Bot', value: `> \`${botLatency}ms\``, inline: true }, 
+                { name: 'Ping del Bot', value: `> \`${Math.abs(client.ws.ping)}ms\``, inline: true },
+                { name: 'Ping de la DB', value: `> \`${dbLatency}\``, inline: true },
                 { name: 'Tiempo en Línea', value: `> \`${uptimeString}\``, inline: true },
             ])
             .setFooter({ text: 'Estos tiempos de respuesta son aproximados' });
 
-        return await safeReply(interaction, { embeds: [embed], ephemeral: false });
+        return await safeReply(interaction, { embeds: [embed] });
     },
 };
 
-export default PingCommand;

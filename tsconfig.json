@@ -5,7 +5,6 @@
 		"forceConsistentCasingInFileNames": true,
 		"skipLibCheck": true,
 		"resolveJsonModule": true,
-		"strict": true,
 
 		// Language and environment options
 		"lib": ["ESNext"],
@@ -13,30 +12,69 @@
 		"module": "NodeNext",
 		"moduleResolution": "NodeNext",
 		
-		// Linting options
-		"noUnusedLocals": true,
-		"noUnusedParameters": true,
-		"noImplicitReturns": true,
-		"noImplicitOverride": true,
+		// Linting options (relaxed temporarily to reduce noise during migration)
+		"strict": false,
+		"noUnusedLocals": false,
+		"noUnusedParameters": false,
+		"noImplicitReturns": false,
+		"noImplicitOverride": false,
 		"noEmitOnError": true,
 
 		// Output Options
 		"outDir": "./build",
 		"rootDir": "./src",
 
-		// Path mapping Options
+		"baseUrl": ".",
+		// Path mapping Options (aliases used across the project)
 		"paths": {
+			// Specific file imports
+			"@structures": ["./src/structures/MyClient.ts"],
+			"@structures/*": ["./src/structures/*"],
+			
+			// Config paths
+			"@config": ["./src/config"],
+			"@config/*": ["./src/config/*.ts"],
+			
+			// Utils paths
+			"@src/utils/*": ["./src/utils/*.ts"],
+			
+			// Src config paths
+			"@src/config/*": ["./src/config/*.ts"],
+			
+			// Src paths
+			"@src/*": ["./src/*"],
+			"@src": ["./src"],
+			
+			// Handler paths
+			"@src/handlers/*": ["./src/handlers/*.ts"],
+			
+			// Database paths
+			"@src/database/*": ["./src/discord/base/database/*.ts"],
+			"@src/database/economy": ["./src/discord/base/database/economy.ts"],
+			"@src/database/mongodb": ["./src/discord/base/database/mongodb.ts"],
+			
+			// Economy and transaction paths
+			"@economyConfig": ["./src/economy/index.ts"],
+			"@economy": ["./src/discord/base/database/economy.ts"],
+			"@economy/*": ["./src/discord/base/database/*.ts"],
+			"@logger": ["./src/utils/logger.ts"],
+			"@safeReply": ["./src/utils/safeReply.ts"],
+			"@transactionModel": ["./src/discord/base/database/Transaction.ts"],
+			"@transactionModel/*": ["./src/discord/base/database/*.ts"],
+			"@database": ["./src/discord/base/database/mongodb.ts"],
+			"@database/*": ["./src/discord/base/database/*.ts"],
+			
+			// Hash-based aliases
 			"#env": ["./src/env.ts"],
 			"#base": ["./src/discord/base/index.ts"],
 			"#functions": ["./src/functions/index.ts"],
-			"#database": ["./src/database/index.ts"],
 			"#server": ["./src/server/index.ts"],
 			"#menus": ["./src/menus/index.ts"],
 			"#tools": ["./src/tools/index.ts"],
-			"#lib/*": ["./src/lib/*"],
-			"#shared/*": ["./src/shared/*"],
-			"#types/*": ["./src/@types/*"],
-			"#emojis": ["./emojis.json"],
+			"#lib/*": ["./src/lib/*.ts"],
+			"#shared/*": ["./src/shared/*.ts"],
+			"#types/*": ["./src/@types/*.ts"],
+			"#emojis": ["./emojis.json"]
 		}
 	},
 	

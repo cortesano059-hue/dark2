@@ -1,14 +1,103 @@
-// src/config/EmojiList.ts
-interface EmojiList {
-    yes: string;
-    no: string;
-    [key: string]: string;
-}
+export default {
+    yes: "✅",
+    no: "❌",
+    loading: "⏳",
+    warn: "⚠️",
+    alert: "🚨",
+    error: "🚫",
+    info: "ℹ️",
+    question: "❓",
 
-// Puedes expandir esta lista para todos tus emojis
-const Emojis: EmojiList = {
-    yes: '✅',
-    no: '❌',
+    flechader: "➡️",
+    flechaizq: "⬅️",
+    flechaderlong: "▶️",
+    flechaizqlong: "◀️",
+    doubleflechader: "⏭️",
+    doubleflechaizq: "⏮️",
+    flechalonger: "🔀",
+    flechalongerder: "🔁",
+
+    coin: "🪙",
+    money: "💰",
+    bank: "🏦",
+    total: "📊",
+    shop: "🛒",
+    box: "📦",
+    gem: "💎",
+
+    dni: "🪪",
+    economy: "💰",
+    infoCategory: "📘",
+    inventory: "📦",
+    moderacion: "🛡️",
+    policia: "🚓",
+    rol: "🎭",
+    developer: "🛠️",
+
+    user: "👤",
+    crown: "👑",
+    gear: "⚙️",
+    link: "🔗",
+    pin: "📌",
+    trash: "🗑️",
+    search: "🔍",
+    time: "⏰",
+    builder: "🔧",
+
+    discord: "💬",
+    chat: "💬",
+    bot: "🤖",
+    channel: "📺",
+    thread: "🧵",
+
+    joined: "📥",
+    left: "📤",
+    like: "👍",
+    favourite: "⭐",
+    boost: "🚀",
+
+    disk: "💿",
+    controller: "🎮",
+    pc: "💻",
+    giveaway: "🎉",
+
+    notes: "🎵",
+    music: "🎵",
+    volume: "🔊",
+    stop: "⏹️",
+    skip: "⏭️",
+    backward: "⏮️",
+    forward: "⏩",
+    pause: "⏸️",
+    resume: "▶️",
+    loop: "🔁",
+    autoplay: "🔀",
+    mic: "🎤",
+
+    online: "🟢",
+    offline: "⚪",
+    idle: "🟡",
+    dnd: "🔴",
+
+    HypeSquadOnlineHouse1: "⚡",
+    HypeSquadOnlineHouse2: "🔥",
+    HypeSquadOnlineHouse3: "⚖️",
+    ActiveDeveloper: "👨‍💻",
+
+    youtube: "📺",
+    twitter: "🐦",
+    twitch: "🎮",
+    spotify: "🎵",
+    github: "🐙",
+
+    niby: "🎯",
+
+    SUCCESS: "✅",
+    ERROR: "❌",
+    WARNING: "⚠️",
+    CASH: "💵",
+    BANK: "🏦",
+    ARROW: "▶️",
+    DOT: "▪️"
 };
 
-export default Emojis;

@@ -1,26 +1,23 @@
-// src/utils/ThemedEmbed.ts
+import { EmbedBuilder } from 'discord.js';
+import Emojis from "@config/EmojiList";
 
-import { EmbedBuilder, ColorResolvable } from 'discord.js';
-// FIX: Extensión .js añadida (Soluciona Error 2835)
-import Emojis from '../config/EmojiList.js'; 
+const NIBY_ACCENT_COLOR = '#00AACC'; 
+const NIBY_ERROR_COLOR = '#FF5500';
 
-const NIBY_ACCENT_COLOR: ColorResolvable = '#00AACC'; 
-const NIBY_ERROR_COLOR: ColorResolvable = '#FF5500';
-
-class ThemedEmbed extends EmbedBuilder {
-    constructor() {
+export default class ThemedEmbed extends EmbedBuilder {
+    constructor(interaction: any = null) {
         super();
-        this.setColor(NIBY_ACCENT_COLOR).setTimestamp();
+        this.setColor(NIBY_ACCENT_COLOR as any);
+        this.setTimestamp();
     }
 
-    // FIX: Eliminado el parámetro interaction no utilizado (Soluciona Error 6133)
-    static base(): ThemedEmbed {
-        return new ThemedEmbed();
+    static base(interaction: any = null): ThemedEmbed {
+        return new ThemedEmbed(interaction);
     }
 
     static success(title: string, description?: string): ThemedEmbed {
         const embed = new ThemedEmbed();
-        const emoji = Emojis?.yes || '✅'; 
+        const emoji = (Emojis && Emojis.yes) ? Emojis.yes : '✅';
         embed.setTitle(`${emoji} ${title}`);
         if (description) embed.setDescription(description);
         return embed;
@@ -28,11 +25,10 @@ class ThemedEmbed extends EmbedBuilder {
 
     static error(title: string, description?: string): ThemedEmbed {
         const embed = new ThemedEmbed();
-        const emoji = Emojis?.no || '❌';
-        embed.setTitle(`${emoji} ${title}`).setColor(NIBY_ERROR_COLOR);
+        const emoji = (Emojis && Emojis.no) ? Emojis.no : '❌';
+        embed.setTitle(`${emoji} ${title}`).setColor(NIBY_ERROR_COLOR as any);
         if (description) embed.setDescription(description);
         return embed;
     }
 }
 
-export default ThemedEmbed;

@@ -1,32 +1,33 @@
 {
-  "name": "newposibledark",
+  "name": "newdark",
   "type": "module",
   "main": "build/index.js",
   "scripts": {
     "check": "tsc --noEmit && echo ✔ Ok",
-    "build": "tsup",
+    "build": "tsc",
     "dev": "tsx --env-file=.env ./src/index.ts",
     "dev:dev": "tsx --env-file=.env.dev ./src/index.ts",
     "watch": "tsx --watch --env-file=.env ./src/index.ts",
     "watch:dev": "tsx --watch --env-file=.env.dev ./src/index.ts",
-    "start": "node --env-file=.env .",
-    "start:dev": "node --env-file=.env.dev ."
+    "start": "node --enable-source-maps ./build/index.js",
+    "start:dev": "node --env-file=.env.dev .",
+    "deploy": "tsx --env-file=.env ./src/scripts/deploy-commands.ts",
+    "start:prod": "npm run build && node --enable-source-maps ./build/index.js"
   },
   "dependencies": {
-    "@magicyan/discord": "1.6.3",
-    "chalk": "5.6.2",
-    "discord.js": "14.24.2",
+    "@magicyan/discord": "1.6.4",
+    "chalk": "^5.3.0",
+    "discord.js": "^14.17.3",
+    "glob": "^10.4.5",
+    "mongoose": "^8.6.4",
     "rou3": "0.7.10",
-    "zod": "4.1.11",
-    "http-status-codes": "2.3.0",
-    "fastify": "5.0.0",
-    "@fastify/cors": "10.0.1"
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "@types/node": "22.16.4",
-    "tsx": "4.19.3",
-    "typescript": "5.9.3",
-    "tsup": "^8.3.5"
+    "@types/glob": "^8.1.0",
+    "@types/node": "^22.10.1",
+    "tsx": "^4.19.2",
+    "typescript": "^5.4.5"
   },
   "imports": {
     "#env": [
@@ -57,5 +58,5 @@
       "./build/shared/*"
     ]
   },
-  "baseVersion": "1.4.11"
+  "baseVersion": "1.4.12"
 }
