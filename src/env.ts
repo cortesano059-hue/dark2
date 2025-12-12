@@ -1,28 +1,28 @@
-import { validateEnv } from "#base";
 import { z } from "zod";
+import dotenv from "dotenv";
 
-export const env = validateEnv(
-    z.object({
-        // Discord Bot Configuration
-        BOT_TOKEN: z.string().min(1, "Discord Bot Token is required"),
-        CLIENT_ID: z.string().min(1, "Discord Client ID is required"),
-        OWNER_ID: z.string().min(1, "Bot Owner ID is required"),
-        GUILD_ID: z.string().optional(),
+dotenv.config();
 
-        // Database Configuration
-        MONGO_URI: z.string().min(1, "MongoDb URI is required"),
-        DATABASE_NAME: z.string().optional(),
+const envSchema = z.object({
+    BOT_TOKEN: z.string(),
+    CLIENT_ID: z.string(),
+    OWNER_ID: z.string(),
 
-        // Webhook Logging (optional)
-        WEBHOOK_LOGS_URL: z
-            .string()
-            .optional()
-            .refine(
-                (val) => !val || /^https?:\/\/.+/.test(val),
-                { message: "WEBHOOK_LOGS_URL must be a valid URL" }
-            ),
+    // Base de datos
+    MONGO_URI: z.string(),
+    MONGO_DB: z.string().default("darkdb"),
+    DATABASE_NAME: z.string().optional(), // ← requerida por tus archivos
+     
+    // Aplicación
+    GUILD_ID: z.string(),
+    PREFIX: z.string().optional(),
 
-        DISCORD_LOG_WEBHOOK_ID: z.string().optional(),
-        DISCORD_LOG_WEBHOOK_TOKEN: z.string().optional(),
-    })
-);
+    // Logs
+    DISCORD_LOG_WEBHOOK_ID: z.string().optional(),
+    DISCORD_LOG_WEBHOOK_TOKEN: z.string().optional(),
+    WEBHOOK_LOGS_URL: z.string().optional(), // ← requerida por base.error.ts
+
+    BASE_VERSION: z.string().default("1.4.11"),
+});
+
+export const env = envSchema.parse(process.env);

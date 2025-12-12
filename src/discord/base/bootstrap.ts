@@ -12,7 +12,7 @@ import {
 import { Constatic } from "./app.js";
 import { baseErrorHandler } from "./base.error.js";
 
-// Import FIX
+// Import correcto
 import { BASE_VERSION, runtimeDisplay } from "./base.runtime.js";
 
 import { BaseCommandHandlers } from "./commands/handlers.js";
@@ -42,7 +42,7 @@ export async function bootstrap(options: BootstrapOptions) {
 
     const app = Constatic.getInstance();
 
-    // READY
+    // READY EVENT
     client.once("clientReady", async (client) => {
         registerErrorHandlers(client);
         await client.guilds.fetch().catch(() => null);
@@ -60,12 +60,10 @@ export async function bootstrap(options: BootstrapOptions) {
     // INTERACTIONS
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
-            await BaseCommandHandlers.autocomplete(interaction);
-            return;
+            return void BaseCommandHandlers.autocomplete(interaction);
         }
         if (interaction.isCommand()) {
-            await BaseCommandHandlers.command(interaction);
-            return;
+            return void BaseCommandHandlers.command(interaction);
         }
         await BaseResponderHandlers.handler(interaction);
     });
@@ -83,13 +81,10 @@ export async function bootstrap(options: BootstrapOptions) {
         } catch {}
     }
 
-    // LOAD MODULES (Commands / Events / Responders)
+    // LOAD MODULES
     await loadModules(meta.dirname, modules);
 
-    // LOG estilo dark2 → SOLO este
-    if (loadLogs) {
-        app.printLoadLogs?.();
-    }
+    if (loadLogs) app.printLoadLogs?.();
 
     console.log();
     console.log(ck.blue(`★ Constatic Base ${BASE_VERSION}`));
@@ -97,7 +92,7 @@ export async function bootstrap(options: BootstrapOptions) {
 
     BaseEventHandlers.register(client);
 
-    // AUTO DEPLOY -------------------------------------------
+    // AUTO-DEPLOY -------------------------------------------
     async function deployCommands() {
         const rest = new REST({ version: "10" }).setToken(env.BOT_TOKEN);
 
@@ -126,17 +121,21 @@ export async function bootstrap(options: BootstrapOptions) {
     return { client };
 }
 
-// LOADERS ----------------------------------------------------
+// ---------------------------------------------------------
+// MODULE LOADER COMPATIBLE CON DISCLOUD (JS only)
+// ---------------------------------------------------------
 async function loadModules(workdir: string, modules: string[] = []) {
     const files = await Array.fromAsync(
         glob(
             [
-                "./discord/**/*.{js,ts,jsx,tsx}",
+                "./discord/**/*.js",
+                "./discord/**/*.cjs",
+                "./discord/**/*.mjs",
                 ...modules,
             ],
             {
                 cwd: workdir,
-                exclude: ["./discord/index.*", "./discord/base/**/*"]
+                exclude: ["./discord/index.*", "./discord/base/**/*"],
             }
         )
     );
@@ -144,10 +143,10 @@ async function loadModules(workdir: string, modules: string[] = []) {
     let createCommand: any;
 
     try {
-        const discordIndex = await import(`file://${join(workdir, "./discord/index.ts")}`);
+        const discordIndex = await import(`file://${join(workdir, "./discord/index.js")}`);
         createCommand = discordIndex.createCommand;
     } catch {
-        const fallback = await import(`file://${join(workdir, "./discord/index.js")}`).catch(() => null);
+        const fallback = await import(`file://${join(workdir, "./discord/index.cjs")}`).catch(() => null);
         if (fallback?.createCommand) {
             createCommand = fallback.createCommand;
         } else {
@@ -167,14 +166,12 @@ async function loadModules(workdir: string, modules: string[] = []) {
                     if (def.data && def.execute && def.data.toJSON) cmd = def;
                 }
 
-                if (!cmd && module.command) {
-                    if (module.command.data && module.command.execute && module.command.data.toJSON)
-                        cmd = module.command;
+                if (!cmd && module.command?.data?.toJSON && module.command?.execute) {
+                    cmd = module.command;
                 }
 
-                if (!cmd && module.data && module.execute) {
-                    if (module.data.toJSON && typeof module.execute === "function")
-                        cmd = { data: module.data, execute: module.execute };
+                if (!cmd && module.data?.toJSON && typeof module.execute === "function") {
+                    cmd = { data: module.data, execute: module.execute };
                 }
 
                 if (cmd) {
@@ -182,15 +179,18 @@ async function loadModules(workdir: string, modules: string[] = []) {
 
                     createCommand({
                         name: c.name,
-                        description: c.description || "",
+                        description: c.description,
                         options: c.options || [],
                         run: cmd.execute,
                     });
                 }
+
             } catch {}
         })
     );
 }
+
+// ---------------------------------------------------------
 
 function registerErrorHandlers(client?: Client<true>): void {
     const errorHandler = client
