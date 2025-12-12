@@ -8,13 +8,18 @@ import {
     REST,
     Routes
 } from "discord.js";
+
 import { Constatic } from "./app.js";
 import { baseErrorHandler } from "./base.error.js";
-import { runtimeDisplay } from "./base.version.js";
+
+// Import FIX
+import { BASE_VERSION, runtimeDisplay } from "./base.runtime.js";
+
 import { BaseCommandHandlers } from "./commands/handlers.js";
 import "./constants.js";
 import { BaseEventHandlers } from "./events/handlers.js";
 import { BaseResponderHandlers } from "./responders/handlers.js";
+
 import { glob } from "node:fs/promises";
 import { join } from "node:path";
 
@@ -37,6 +42,7 @@ export async function bootstrap(options: BootstrapOptions) {
 
     const app = Constatic.getInstance();
 
+    // READY
     client.once("clientReady", async (client) => {
         registerErrorHandlers(client);
         await client.guilds.fetch().catch(() => null);
@@ -51,6 +57,7 @@ export async function bootstrap(options: BootstrapOptions) {
         );
     });
 
+    // INTERACTIONS
     client.on("interactionCreate", async (interaction) => {
         if (interaction.isAutocomplete()) {
             await BaseCommandHandlers.autocomplete(interaction);
@@ -67,9 +74,7 @@ export async function bootstrap(options: BootstrapOptions) {
         await beforeLoad(client);
     }
 
-    // -------------------------------------------------------------
-    // 🔥 FIX CRÍTICO: cargar index.ts correctamente (antes fallaba)
-    // -------------------------------------------------------------
+    // Load discord/index
     try {
         await import(`file://${join(meta.dirname, "./discord/index.ts")}`);
     } catch {
@@ -78,33 +83,30 @@ export async function bootstrap(options: BootstrapOptions) {
         } catch {}
     }
 
-    // -------------------------------------------------------------
-
+    // LOAD MODULES (Commands / Events / Responders)
     await loadModules(meta.dirname, modules);
 
-    if (loadLogs) app.printLoadLogs();
+    // LOG estilo dark2 → SOLO este
+    if (loadLogs) {
+        app.printLoadLogs?.();
+    }
 
     console.log();
-    console.log(ck.blue(`★ Constatic Base ${ck.reset.dim(env.BASE_VERSION)}`));
-    console.log(`${ck.hex("#5865F2")("◌ discord.js")} ${ck.dim(djsVersion)}`, "|", runtimeDisplay);
+    console.log(ck.blue(`★ Constatic Base ${BASE_VERSION}`));
+    console.log(`${ck.hex("#5865F2")("◌ discord.js")} ${ck.dim(djsVersion)} | ${runtimeDisplay()}`);
 
     BaseEventHandlers.register(client);
 
-    // -------------------------------------------------------------
-    // AUTO-DEPLOY CORRECTO
-    // -------------------------------------------------------------
+    // AUTO DEPLOY -------------------------------------------
     async function deployCommands() {
         const rest = new REST({ version: "10" }).setToken(env.BOT_TOKEN);
 
         const builtCommands = app.commands.build();
-        console.log("COMANDOS CONSTRUIDOS:", builtCommands);
 
         if (!env.GUILD_ID) {
             console.error("❌ No se encontró GUILD_ID en .env");
             return;
         }
-
-        console.log(`📤 Deploying commands to guild ${env.GUILD_ID}...`);
 
         try {
             await rest.put(
@@ -124,6 +126,7 @@ export async function bootstrap(options: BootstrapOptions) {
     return { client };
 }
 
+// LOADERS ----------------------------------------------------
 async function loadModules(workdir: string, modules: string[] = []) {
     const files = await Array.fromAsync(
         glob(
