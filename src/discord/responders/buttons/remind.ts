@@ -4,7 +4,7 @@ import { time } from "discord.js";
 import { z } from "zod";
 
 const schema = z.object({
-    date: z.transform(createDate),
+    date: z.any().transform(createDate),
 });
 createResponder({
     customId: "remind/:date",
@@ -13,7 +13,7 @@ createResponder({
     async run(interaction, { date }) {
         await interaction.reply({
             flags: ["Ephemeral"],
-            content: `⏳ You run ping command ${time(date, "R")}`,
+            content: `⏳ You run ping command ${time(new Date(date), "R")}`,
         });
     },
 });
