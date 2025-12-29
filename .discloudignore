@@ -1,9 +1,26 @@
+# Ignore node_modules (let Discloud install them)
 node_modules
+
+# Ignore git
 .git
-dashboard/node_modules
-logs
+
+# Ignore source code (we use build/)
+# src
+# dashboard/src
+
+# Ignore env files
+.env
+.env.dev
+.env.development
+
+# Ignore editor configs
 .vscode
-*.md
-.gitignore
-tsup.config.ts
-tsconfig.json
+.idea
+
+# Ignore logs
+*.log
+logs/
+
+# But KEEP build and dashboard/dist (DO NOT ADD THEM HERE)
+# build
+# dashboard/dist
