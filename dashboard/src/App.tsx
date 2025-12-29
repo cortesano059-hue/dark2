@@ -1,6 +1,6 @@
 import { Loader2 } from 'lucide-react';
 import { useEffect } from 'react';
-import { Navigate, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
+import { Navigate, Outlet, Route, BrowserRouter as Router, Routes } from 'react-router-dom';
 import { Layout } from './components/Layout';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { Backpacks } from './pages/Backpacks';
@@ -16,7 +16,7 @@ import { Servers } from './pages/Servers';
 import { Shop } from './pages/Shop';
 import { StoreEditor } from './pages/StoreEditor';
 
-const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+const ProtectedLayout = () => {
   const { user, loading } = useAuth();
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
@@ -25,7 +25,7 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  return <Layout>{children}</Layout>;
+  return <Layout><Outlet /></Layout>;
 };
 
 const DynamicBranding = () => {
@@ -57,17 +57,21 @@ function App() {
         <Routes>
           <Route path="/" element={<Layout hideSidebar><Landing /></Layout>} />
           <Route path="/commands" element={<Layout><Commands /></Layout>} />
-          <Route path="/dashboard" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/servers" element={<ProtectedRoute><Servers /></ProtectedRoute>} />
           <Route path="/leaderboard" element={<Layout><Leaderboard /></Layout>} />
-          <Route path="/stats/:id" element={<ProtectedRoute><Home /></ProtectedRoute>} />
-          <Route path="/settings/:id" element={<ProtectedRoute><Config /></ProtectedRoute>} />
-          <Route path="/economy/:id" element={<ProtectedRoute><MemberManagement /></ProtectedRoute>} />
-          <Route path="/catalog/:id" element={<ProtectedRoute><StoreEditor /></ProtectedRoute>} />
-          <Route path="/shop/:id" element={<ProtectedRoute><Shop /></ProtectedRoute>} />
-          <Route path="/profile/:id" element={<ProtectedRoute><Inventory /></ProtectedRoute>} />
-          <Route path="/backpacks/:id" element={<ProtectedRoute><Backpacks /></ProtectedRoute>} />
-          <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+
+          <Route element={<ProtectedLayout />}>
+            <Route path="/dashboard" element={<Home />} />
+            <Route path="/servers" element={<Servers />} />
+            <Route path="/stats/:id" element={<Home />} />
+            <Route path="/settings/:id" element={<Config />} />
+            <Route path="/economy/:id" element={<MemberManagement />} />
+            <Route path="/catalog/:id" element={<StoreEditor />} />
+            <Route path="/shop/:id" element={<Shop />} />
+            <Route path="/profile/:id" element={<Inventory />} />
+            <Route path="/backpacks/:id" element={<Backpacks />} />
+            <Route path="/profile" element={<Profile />} />
+          </Route>
+
           <Route path="*" element={<Navigate to="/" />} />
         </Routes>
       </AuthProvider>

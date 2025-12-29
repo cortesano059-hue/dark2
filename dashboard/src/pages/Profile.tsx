@@ -1,7 +1,7 @@
+import { Landmark, Loader2, Package, Wallet } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { api } from '../utils/api';
 import { useAuth } from '../contexts/AuthContext';
-import { Wallet, Package, Loader2, Landmark } from 'lucide-react';
+import { api } from '../utils/api';
 
 interface Item {
     id: string;
@@ -36,7 +36,7 @@ export const Profile = () => {
             .finally(() => setLoading(false));
     }, [authUser]);
 
-    if (loading) return <div className="flex items-center justify-center h-64"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
+    if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
     if (!user) return <div className="text-center py-20">No se encontró el perfil.</div>;
 
     const total = user.money + user.bank;
