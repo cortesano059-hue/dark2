@@ -1,0 +1,106 @@
+const Emojis = {
+  // --- BÁSICOS ---
+  yes: "\u2705",
+  no: "\u274C",
+  loading: "\u23F3",
+  warn: "\u26A0\uFE0F",
+  alert: "\u{1F6A8}",
+  error: "\u{1F6AB}",
+  info: "\u2139\uFE0F",
+  question: "\u2753",
+  // --- NAVEGACIÓN ---
+  flechader: "\u27A1\uFE0F",
+  flechaizq: "\u2B05\uFE0F",
+  flechaderlong: "\u25B6\uFE0F",
+  flechaizqlong: "\u25C0\uFE0F",
+  doubleflechader: "\u23ED\uFE0F",
+  doubleflechaizq: "\u23EE\uFE0F",
+  flechalonger: "\u{1F500}",
+  flechalongerder: "\u{1F501}",
+  // --- ECONOMÍA ---
+  coin: "\u{1FA99}",
+  money: "\u{1F4B0}",
+  bank: "\u{1F3E6}",
+  total: "\u{1F4CA}",
+  shop: "\u{1F6D2}",
+  box: "\u{1F4E6}",
+  gem: "\u{1F48E}",
+  // --- CATEGORÍAS DE COMANDOS ---
+  dni: "\u{1FAAA}",
+  economy: "\u{1F4B0}",
+  infoCategory: "\u{1F4D8}",
+  inventory: "\u{1F4E6}",
+  moderacion: "\u{1F6E1}\uFE0F",
+  policia: "\u{1F693}",
+  rol: "\u{1F3AD}",
+  developer: "\u{1F6E0}\uFE0F",
+  // --- UTILIDAD Y SISTEMA ---
+  user: "\u{1F464}",
+  crown: "\u{1F451}",
+  gear: "\u2699\uFE0F",
+  link: "\u{1F517}",
+  pin: "\u{1F4CC}",
+  trash: "\u{1F5D1}\uFE0F",
+  search: "\u{1F50D}",
+  time: "\u23F0",
+  builder: "\u{1F527}",
+  // --- DISCORD Y COMUNICACIÓN ---
+  discord: "\u{1F4AC}",
+  chat: "\u{1F4AC}",
+  bot: "\u{1F916}",
+  channel: "\u{1F4FA}",
+  thread: "\u{1F9F5}",
+  // --- INTERACCIONES ---
+  joined: "\u{1F4E5}",
+  left: "\u{1F4E4}",
+  like: "\u{1F44D}",
+  favourite: "\u2B50",
+  boost: "\u{1F680}",
+  // --- ENTRETENIMIENTO ---
+  disk: "\u{1F4BF}",
+  controller: "\u{1F3AE}",
+  pc: "\u{1F4BB}",
+  giveaway: "\u{1F389}",
+  // --- MÚSICA ---
+  notes: "\u{1F3B5}",
+  music: "\u{1F3B5}",
+  volume: "\u{1F50A}",
+  stop: "\u23F9\uFE0F",
+  skip: "\u23ED\uFE0F",
+  backward: "\u23EE\uFE0F",
+  forward: "\u23E9",
+  pause: "\u23F8\uFE0F",
+  resume: "\u25B6\uFE0F",
+  loop: "\u{1F501}",
+  autoplay: "\u{1F500}",
+  mic: "\u{1F3A4}",
+  // --- ESTADOS ---
+  online: "\u{1F7E2}",
+  offline: "\u26AA",
+  idle: "\u{1F7E1}",
+  dnd: "\u{1F534}",
+  // --- BADGES ---
+  HypeSquadOnlineHouse1: "\u26A1",
+  HypeSquadOnlineHouse2: "\u{1F525}",
+  HypeSquadOnlineHouse3: "\u2696\uFE0F",
+  ActiveDeveloper: "\u{1F468}\u200D\u{1F4BB}",
+  // --- REDES ---
+  youtube: "\u{1F4FA}",
+  twitter: "\u{1F426}",
+  twitch: "\u{1F3AE}",
+  spotify: "\u{1F3B5}",
+  github: "\u{1F419}",
+  // --- ESPECIALES ---
+  niby: "\u{1F3AF}",
+  // --- COMPATIBILIDAD THEMEDEMBED ---
+  SUCCESS: "\u2705",
+  ERROR: "\u274C",
+  WARNING: "\u26A0\uFE0F",
+  CASH: "\u{1F4B5}",
+  BANK: "\u{1F3E6}",
+  ARROW: "\u25B6\uFE0F",
+  DOT: "\u25AA\uFE0F"
+};
+export {
+  Emojis
+};

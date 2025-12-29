@@ -1,0 +1,31 @@
+import { createCommand } from "#base";
+import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
+import { getPoliceRole } from "../../../economy/index.js";
+import { ThemedEmbed } from "../../../utils/ThemedEmbed.js";
+import { safeReply } from "../../../utils/safeReply.js";
+createCommand({
+  name: "entorno",
+  description: "Env\xEDa un mensaje de entorno global.",
+  type: ApplicationCommandType.ChatInput,
+  options: [
+    { name: "mensaje", description: "Lo que sucede", type: ApplicationCommandOptionType.String, required: true },
+    { name: "ubicacion", description: "Ubicaci\xF3n del evento", type: ApplicationCommandOptionType.String, required: false }
+  ],
+  async run(interaction) {
+    if (!interaction.guildId) return;
+    const text = interaction.options.getString("mensaje", true);
+    const ubicacion = interaction.options.getString("ubicacion") || "Desconocida";
+    const guildId = interaction.guildId;
+    const policeRoleId = await getPoliceRole(guildId);
+    const policePing = policeRoleId ? `<@&${policeRoleId}>` : null;
+    const embed = new ThemedEmbed().setTitle("\u{1F4E2} LLAMADA DE ENTORNO").setColor("#F1C40F").setDescription(text).addFields({ name: "\u{1F4CD} Ubicaci\xF3n", value: ubicacion, inline: true }).setFooter({ text: `Reportado por ${interaction.user.displayName}` });
+    const content = policePing ? `|| ${policePing} ||
+\u{1F6A8} Nueva llamada de entorno` : `\u{1F6A8} Nueva llamada de entorno`;
+    await safeReply(interaction, {
+      content,
+      embeds: [embed],
+      allowedMentions: policeRoleId ? { roles: [policeRoleId] } : {},
+      ephemeral: false
+    });
+  }
+});
