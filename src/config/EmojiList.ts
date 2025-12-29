@@ -1,4 +1,5 @@
-export default {
+export const Emojis = {
+    // --- BÁSICOS ---
     yes: "✅",
     no: "❌",
     loading: "⏳",
@@ -8,6 +9,7 @@ export default {
     info: "ℹ️",
     question: "❓",
 
+    // --- NAVEGACIÓN ---
     flechader: "➡️",
     flechaizq: "⬅️",
     flechaderlong: "▶️",
@@ -17,6 +19,7 @@ export default {
     flechalonger: "🔀",
     flechalongerder: "🔁",
 
+    // --- ECONOMÍA ---
     coin: "🪙",
     money: "💰",
     bank: "🏦",
@@ -25,6 +28,7 @@ export default {
     box: "📦",
     gem: "💎",
 
+    // --- CATEGORÍAS DE COMANDOS ---
     dni: "🪪",
     economy: "💰",
     infoCategory: "📘",
@@ -34,6 +38,7 @@ export default {
     rol: "🎭",
     developer: "🛠️",
 
+    // --- UTILIDAD Y SISTEMA ---
     user: "👤",
     crown: "👑",
     gear: "⚙️",
@@ -44,23 +49,27 @@ export default {
     time: "⏰",
     builder: "🔧",
 
+    // --- DISCORD Y COMUNICACIÓN ---
     discord: "💬",
     chat: "💬",
     bot: "🤖",
     channel: "📺",
     thread: "🧵",
 
+    // --- INTERACCIONES ---
     joined: "📥",
     left: "📤",
     like: "👍",
     favourite: "⭐",
     boost: "🚀",
 
+    // --- ENTRETENIMIENTO ---
     disk: "💿",
     controller: "🎮",
     pc: "💻",
     giveaway: "🎉",
 
+    // --- MÚSICA ---
     notes: "🎵",
     music: "🎵",
     volume: "🔊",
@@ -74,24 +83,29 @@ export default {
     autoplay: "🔀",
     mic: "🎤",
 
+    // --- ESTADOS ---
     online: "🟢",
     offline: "⚪",
     idle: "🟡",
     dnd: "🔴",
 
+    // --- BADGES ---
     HypeSquadOnlineHouse1: "⚡",
     HypeSquadOnlineHouse2: "🔥",
     HypeSquadOnlineHouse3: "⚖️",
     ActiveDeveloper: "👨‍💻",
 
+    // --- REDES ---
     youtube: "📺",
     twitter: "🐦",
     twitch: "🎮",
     spotify: "🎵",
     github: "🐙",
 
+    // --- ESPECIALES ---
     niby: "🎯",
 
+    // --- COMPATIBILIDAD THEMEDEMBED ---
     SUCCESS: "✅",
     ERROR: "❌",
     WARNING: "⚠️",
@@ -100,4 +114,3 @@ export default {
     ARROW: "▶️",
     DOT: "▪️"
 };
-

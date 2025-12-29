@@ -1,30 +1,38 @@
-import { SlashCommandBuilder, PermissionFlagsBits } from 'discord.js';
-import { IncomeRole } from '@src/database/mongodb';
-import safeReply from '@src/utils/safeReply';
+import { createCommand } from "#base";
+import { GuildConfig } from "#database";
+import { ApplicationCommandOptionType, ApplicationCommandType, PermissionFlagsBits } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
 
-const command = {
-    data: new SlashCommandBuilder()
-        .setName("removeincome")
-        .setDescription("Elimina el sueldo asignado a un rol.")
-        .addRoleOption(opt =>
-            opt.setName("rol")
-                .setDescription("Rol al que deseas quitar el sueldo.")
-                .setRequired(true)
-        )
-        .setDefaultMemberPermissions(PermissionFlagsBits.ManageGuild),
-
-    async execute(interaction) {
-        const guildId = interaction.guild.id;
+createCommand({
+    name: "removeincome",
+    description: "Elimina el sueldo asignado a un rol.",
+    type: ApplicationCommandType.ChatInput,
+    defaultMemberPermissions: PermissionFlagsBits.ManageGuild,
+    options: [
+        {
+            name: "rol",
+            description: "Rol al que deseas quitar el sueldo.",
+            type: ApplicationCommandOptionType.Role,
+            required: true
+        }
+    ],
+    async run(interaction) {
+        const guildId = interaction.guildId;
         const role = interaction.options.getRole("rol");
+        if (!role || !guildId) return;
 
-        const removed = await IncomeRole.findOneAndDelete({ guildId, roleId: role.id });
+        const res = await GuildConfig.updateOne(
+            { guildId },
+            { $pull: { incomeRoles: { roleId: role.id } } }
+        );
+
+        const removed = res.modifiedCount > 0;
 
         if (!removed) {
-            return safeReply(interaction, "❌ Ese rol no tenía un sueldo configurado.");
+            await safeReply(interaction, "❌ Ese rol no tenía un sueldo configurado.");
+            return;
         }
 
-        safeReply(interaction, `🗑️ Se eliminó el sueldo del rol **${role.name}**.`);
+        await safeReply(interaction, `🗑️ Se eliminó el sueldo del rol **${role.name}**.`);
     }
-};
-
-export default command;
+});

@@ -1,53 +1,80 @@
-import { SlashCommandBuilder } from 'discord.js';
-import { IncomeRole } from '@src/database/mongodb';
-import safeReply from '@src/utils/safeReply';
+import { createCommand } from "#base";
+import { GuildConfig } from "#database";
+import { ApplicationCommandType } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
 
-const command = {
-  data: new SlashCommandBuilder()
-    .setName("incomeall")
-    .setDescription("Muestra todos los roles con salarios configurados."),
+createCommand({
+    name: "incomeall",
+    description: "Muestra todos los roles con salarios configurados.",
+    type: ApplicationCommandType.ChatInput,
+    async run(interaction) {
+        try {
+            const guild = interaction.guild;
+            if (!guild) return;
+            const guildId = guild.id;
 
-  async execute(interaction) {
-    const guild = interaction.guild;
-    const guildId = guild.id;
+            const config = await GuildConfig.findOne({ guildId }).lean();
+            const incomes = config?.incomeRoles || [];
 
-    const incomes = await IncomeRole.find({ guildId });
+            if (!incomes || incomes.length === 0) {
+                await safeReply(interaction, {
+                    embeds: [
+                        {
+                            title: "📄 Lista de salarios",
+                            description: "No hay salarios configurados en este servidor.",
+                            color: 0xe74c3c,
+                        },
+                    ],
+                });
+                return;
+            }
 
-    if (!incomes || incomes.length === 0) {
-      return safeReply(interaction, {
-        embeds: [
-          {
-            title: "📄 Lista de salarios",
-            description: "No hay salarios configurados en este servidor.",
-            color: 0xe74c3c
-          }
-        ]
-      });
-    }
+            // Ordenar por salario (desc)
+            incomes.sort((a, b) => b.incomePerHour - a.incomePerHour);
 
-    // Ordenar: mayor → menor salario
-    incomes.sort((a, b) => b.incomePerHour - a.incomePerHour);
+            const lines = [];
 
-    const lines = incomes.map((r, i) => {
-      const role = guild.roles.cache.get(r.roleId);
-      const roleName = role ? role.name : "(Rol eliminado)";
-      const roleTag = role ? `<@&${r.roleId}>` : "❌";
+            for (let i = 0; i < incomes.length; i++) {
+                const r = incomes[i];
 
-      return `**${i + 1}.** ${roleTag} **${roleName}** — 💵 **$${r.incomePerHour}/hora**`;
-    });
+                // Cache → fetch fallback
+                let role = guild.roles.cache.get(r.roleId);
+                if (!role) {
+                    try {
+                        role = (await guild.roles.fetch(r.roleId)) ?? undefined;
+                    } catch {
+                        role = undefined;
+                    }
+                }
 
-    return safeReply(interaction, {
-      embeds: [
-        {
-          title: "💼 Salarios configurados",
-          description: lines.join("\n"),
-          color: 0x3498db,
-          footer: {
-            text: `Total de roles con salario: ${incomes.length}`
-          }
+                const roleTag = role ? `<@&${r.roleId}>` : "❌ Rol eliminado";
+
+                lines.push(
+                    `**${i + 1}.** ${roleTag} — 💵 **$${r.incomePerHour.toLocaleString()}/hora**`
+                );
+            }
+
+            // Protección límite embed
+            const description = lines.join("\n").slice(0, 4000);
+
+            await safeReply(interaction, {
+                embeds: [
+                    {
+                        title: "💼 Salarios configurados",
+                        description,
+                        color: 0x3498db,
+                        footer: {
+                            text: `Total de roles con salario: ${incomes.length}`,
+                        },
+                    },
+                ],
+            });
+        } catch (err) {
+            console.error("❌ Error en /incomeall:", err);
+            await safeReply(interaction, {
+                content: "❌ Ocurrió un error al obtener los salarios.",
+                ephemeral: true,
+            });
         }
-      ]
-    });
-  }
-};
-export default command;
+    }
+});

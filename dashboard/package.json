@@ -1,0 +1,39 @@
+{
+  "name": "dashboard",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "autoprefixer": "^10.4.19",
+    "axios": "^1.6.8",
+    "clsx": "^2.1.0",
+    "framer-motion": "^11.0.24",
+    "lucide-react": "^0.368.0",
+    "postcss": "^8.4.38",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.22.3",
+    "socket.io-client": "^4.7.5",
+    "tailwind-merge": "^2.2.2",
+    "tailwindcss": "^3.4.3",
+    "vite": "^5.2.8"
+  },
+  "devDependencies": {
+    "@types/node": "^20.12.7",
+    "@types/react": "^18.2.74",
+    "@types/react-dom": "^18.2.24",
+    "@typescript-eslint/eslint-plugin": "^7.5.0",
+    "@typescript-eslint/parser": "^7.5.0",
+    "@vitejs/plugin-react": "^4.2.1",
+    "eslint": "^8.57.0",
+    "eslint-plugin-react-hooks": "^4.6.0",
+    "eslint-plugin-react-refresh": "^0.4.6",
+    "typescript": "^5.4.3"
+  }
+}

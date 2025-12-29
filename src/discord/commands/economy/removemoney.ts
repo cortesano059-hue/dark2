@@ -1,48 +1,108 @@
-import { SlashCommandBuilder, PermissionFlagsBits, ChatInputCommandInteraction } from 'discord.js';
-import ThemedEmbed from '@src/utils/ThemedEmbed';
-import eco from '@economy';
-import safeReply from '@src/utils/safeReply';
+import { createCommand } from "#base";
+import { ApplicationCommandOptionType, ApplicationCommandType, PermissionFlagsBits } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
+import { ThemedEmbed } from "../../../utils/ThemedEmbed.js";
+import * as eco from "../../../economy/index.js";
+import { logger } from "../../../utils/logger.js";
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName('removemoney')
-        .setDescription('Quitar dinero a un usuario (Admin).')
-        .addUserOption(o => o.setName('usuario').setDescription('Usuario').setRequired(true))
-        .addIntegerOption(o => o.setName('cantidad').setDescription('Cantidad').setRequired(true))
-        .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
-
-    async execute(interaction: ChatInputCommandInteraction): Promise<void> {
-        await interaction.deferReply({ });
+createCommand({
+    name: "removemoney",
+    description: "Quitar dinero a un usuario (Admin).",
+    type: ApplicationCommandType.ChatInput,
+    defaultMemberPermissions: PermissionFlagsBits.Administrator,
+    options: [
+        {
+            name: "usuario",
+            description: "Usuario",
+            type: ApplicationCommandOptionType.User,
+            required: true
+        },
+        {
+            name: "cantidad",
+            description: "Cantidad",
+            type: ApplicationCommandOptionType.Integer,
+            required: true
+        },
+        {
+            name: "origen",
+            description: "Desde dónde quitar el dinero",
+            type: ApplicationCommandOptionType.String,
+            choices: [
+                { name: "Dinero en mano", value: "money" },
+                { name: "Banco", value: "bank" }
+            ],
+            required: true
+        }
+    ],
+    async run(interaction) {
+        await interaction.deferReply({});
 
         try {
-            const targetUser = interaction.options.getUser('usuario', true);
+            const targetUser = interaction.options.getUser("usuario");
+            const source = interaction.options.getString("origen");
+            const guildId = interaction.guildId;
 
-            if (!targetUser) {
-                return await safeReply(interaction, { embeds: [ThemedEmbed.error('Error', 'Usuario no encontrado.')] });
+            if (!targetUser || !guildId || !source) return;
+
+            const amount = interaction.options.getInteger("cantidad");
+            if (!amount || amount <= 0) {
+                await safeReply(interaction, ThemedEmbed.error('Error', 'Cantidad inválida.'));
+                return;
             }
 
-            const amount = interaction.options.getInteger('cantidad', true);
-            if (amount <= 0) {
-                return await safeReply(interaction, { embeds: [ThemedEmbed.error('Error', 'Cantidad inválida.')] });
+            const balance = await eco.getBalance(targetUser.id, guildId);
+            let removeResult = { success: false, message: "" };
+
+            if (source === "money") {
+                if ((balance.money ?? 0) < amount) {
+                    await safeReply(interaction, { embeds: [ThemedEmbed.error('Error', 'El usuario no tiene suficiente dinero en mano.')] });
+                    return;
+                }
+                removeResult = await eco.removeMoney(targetUser.id, guildId, amount, 'admin_removemoney');
+            } else if (source === "bank") {
+                if ((balance.bank ?? 0) < amount) {
+                    await safeReply(interaction, ThemedEmbed.error('Error', 'El usuario no tiene suficiente dinero en el banco.'));
+                    return;
+                }
+
+                // Manual removal for bank as eco.removeMoney only targets cash
+                const userDoc = await eco.getUser(targetUser.id, guildId);
+                if (userDoc) {
+                    userDoc.bank = Math.max(0, (userDoc.bank || 0) - amount);
+                    await userDoc.save();
+
+                    logger.logTransaction({
+                        userId: targetUser.id,
+                        guildId: guildId,
+                        type: 'admin_removebank',
+                        amount: -amount,
+                        from: 'bank',
+                    });
+                    removeResult.success = true;
+                }
             }
 
-            // Retirar dinero
-            await eco.removeMoney(targetUser.id, interaction.guild!.id, amount);
+            if (!removeResult.success) {
+                await safeReply(interaction, ThemedEmbed.error('Error', 'No se pudo retirar el dinero.'));
+                return;
+            }
 
-            // Obtener balance actualizado
-            const balance = await eco.getBalance(targetUser.id, interaction.guild!.id);
+            const newBalance = await eco.getBalance(targetUser.id, guildId);
 
             const embed = new ThemedEmbed(interaction)
                 .setTitle('💸 Dinero Retirado')
                 .setColor('#e74c3c')
-                .setDescription(`Se han quitado **$${amount}** a **${targetUser.tag}**.\n` +
-                                `💰 Balance actualizado: **$${balance.money}** (Banco: **${balance.bank}**)`);
+                .setDescription(`Se han quitado **$${amount.toLocaleString()}** de su **${source === "money" ? "cartera" : "banco"}** a **${targetUser}**.`)
+                .addFields(
+                    { name: 'Dinero en Mano', value: `$${(newBalance.money ?? 0).toLocaleString()}`, inline: true },
+                    { name: 'Dinero en Banco', value: `$${(newBalance.bank ?? 0).toLocaleString()}`, inline: true }
+                );
 
-            return await safeReply(interaction, { embeds: [embed] });
+            await safeReply(interaction, { embeds: [embed] });
 
-        } catch (err) {
+        } catch (err: any) {
             console.error('❌ ERROR al ejecutar removemoney:', err);
-            return await safeReply(interaction, { embeds: [ThemedEmbed.error('Error', 'No se pudo retirar el dinero.')] });
+            await safeReply(interaction, ThemedEmbed.error('Error', 'No se pudo retirar el dinero.'));
         }
     }
-};
+});

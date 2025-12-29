@@ -1,41 +1,28 @@
-import { SlashCommandBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle, ComponentType } from "discord.js";
-import { User } from "@database/mongodb";
-import ThemedEmbed from "@src/utils/ThemedEmbed";
-import safeReply from "@src/utils/safeReply";
+import { createCommand } from "#base";
+import {
+    ApplicationCommandType,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ComponentType,
+    ButtonInteraction
+} from "discord.js";
+import { ThemedEmbed } from "../../../utils/ThemedEmbed.js";
+import * as eco from "../../../economy/index.js";
 
-const command = {
-    data: new SlashCommandBuilder()
-        .setName("top")
-        .setDescription("Muestra el ranking económico del servidor."),
-
-    async execute(interaction) {
+createCommand({
+    name: "top",
+    description: "Muestra el ranking económico del servidor.",
+    type: ApplicationCommandType.ChatInput,
+    async run(interaction) {
         await interaction.deferReply();
 
-        const guildId = interaction.guild.id;
-
-        // Función para obtener el top según el modo seleccionado
-        async function getTop(mode) {
-            if (mode === "total") {
-                return await User.aggregate([
-                    { $match: { guildId } },
-                    { $addFields: { total: { $add: ["$money", "$bank"] } } },
-                    { $sort: { total: -1 } },
-                    { $limit: 10 }
-                ]);
-            }
-
-            if (mode === "money") {
-                return await User.find({ guildId }).sort({ money: -1 }).limit(10);
-            }
-
-            if (mode === "bank") {
-                return await User.find({ guildId }).sort({ bank: -1 }).limit(10);
-            }
-        }
+        const guildId = interaction.guildId;
+        if (!guildId) return;
 
         // Función para crear embed según el modo
-        async function buildEmbed(mode) {
-            const top = await getTop(mode);
+        async function buildEmbed(mode: "total" | "money" | "bank") {
+            const top = await eco.getLeaderboard(guildId as string, mode);
 
             const titles = {
                 total: "🏆 Top Economía — Total (Cartera + Banco)",
@@ -50,11 +37,11 @@ const command = {
                 const rank = i + 1;
 
                 let value = 0;
-                if (mode === "total") value = user.total;
+                if (mode === "total") value = user.total; // total is aggregated field
                 if (mode === "money") value = user.money;
                 if (mode === "bank") value = user.bank;
 
-                description += `${rank}. <@${user.userId}> — **$${value.toLocaleString()}**\n`;
+                description += `${rank}. <@${user.userId}> — **$${(value || 0).toLocaleString()}**\n`;
             }
 
             const embed = new ThemedEmbed(interaction)
@@ -66,7 +53,7 @@ const command = {
         }
 
         // Botones
-        const row = new ActionRowBuilder().addComponents(
+        const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
                 .setCustomId("top_total")
                 .setLabel("💰 Total")
@@ -93,17 +80,19 @@ const command = {
             time: 60_000
         });
 
-        collector.on("collect", async (btn) => {
-            if (btn.user.id !== interaction.user.id)
-                return btn.reply({ content: "Solo quien ejecutó el comando puede usar esto.", ephemeral: true });
+        collector.on("collect", async (btn: ButtonInteraction) => {
+            if (btn.user.id !== interaction.user.id) {
+                await btn.reply({ content: "Solo quien ejecutó el comando puede usar esto.", ephemeral: true });
+                return;
+            }
 
-            let mode = "total";
+            let mode: "total" | "money" | "bank" = "total";
             if (btn.customId === "top_money") mode = "money";
             if (btn.customId === "top_bank") mode = "bank";
 
             const newEmbed = await buildEmbed(mode);
 
-            const updatedRow = new ActionRowBuilder().addComponents(
+            const updatedRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
                 new ButtonBuilder()
                     .setCustomId("top_total")
                     .setLabel("💰 Total")
@@ -126,9 +115,7 @@ const command = {
         collector.on("end", async () => {
             try {
                 await interaction.editReply({ components: [] });
-            } catch {}
+            } catch { }
         });
     }
-};
-
-export default command;
+});

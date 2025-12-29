@@ -1,133 +1,97 @@
-import {
-    SlashCommandBuilder,
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle
-} from "discord.js";
+import { createCommand, createResponder, ResponderType } from "#base";
+import { ApplicationCommandType, ApplicationCommandOptionType, ActionRowBuilder, ButtonBuilder, ButtonStyle, Client } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
+import * as eco from "../../../economy/index.js";
+import { ThemedEmbed } from "../../../utils/ThemedEmbed.js";
 
-import safeReply from "@safeReply";
-import eco from "@economy";
+const ITEMS_PER_PAGE = 8;
 
-const command = {
-    data: new SlashCommandBuilder()
-        .setName("inventario")
-        .setDescription("Muestra tu inventario o el de otro usuario.")
-        .addUserOption(option =>
-            option
-                .setName("usuario")
-                .setDescription("Usuario del que ver el inventario")
-        ),
+async function generateInventoryPayload(guildId: string, userId: string, targetUser: any, page: number, client: Client) {
+    const items = await eco.getUserInventory(targetUser.id, guildId);
 
-    async execute(interaction) {
-        await interaction.deferReply();
+    // Sort items
+    items.sort((a, b) => a.itemName.localeCompare(b.itemName));
 
-        try {
-            const targetUser =
-                interaction.options.getUser("usuario") || interaction.user;
+    const totalItems = items.length;
+    const totalPages = Math.ceil(totalItems / ITEMS_PER_PAGE) || 1;
+    page = Math.max(0, Math.min(page, totalPages - 1));
 
-            const guildId = interaction.guild.id;
+    const startIndex = page * ITEMS_PER_PAGE;
+    const pageItems = items.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
-            // Obtener inventario
-            const items = await eco.getUserInventory(targetUser.id, guildId);
+    const embed = new ThemedEmbed()
+        .setTitle(`📦 Inventario de ${targetUser.username}`)
+        .setDescription(items.length === 0 ? "El inventario está vacío." : `Página ${page + 1} de ${totalPages}`)
+        .setFooter({ text: `Total items: ${totalItems}` })
+        .setThumbnail(targetUser.displayAvatarURL());
 
-            if (!items || items.length === 0)
-                return safeReply(
-                    interaction,
-                    `📦 El inventario de **${targetUser.username}** está vacío.`
-                );
-
-            // Ordenar
-            items.sort((a, b) => a.itemName.localeCompare(b.itemName));
-
-            const ITEMS_PER_PAGE = 8;
-            let page = 0;
-
-            const maxPages = Math.ceil(items.length / ITEMS_PER_PAGE);
-
-            const getPageEmbed = (pageIndex) => {
-                const start = pageIndex * ITEMS_PER_PAGE;
-                const pageItems = items.slice(start, start + ITEMS_PER_PAGE);
-
-                const embed = new EmbedBuilder()
-                    .setTitle(`📦 Inventario de ${targetUser.username}`)
-                    .setColor("#3498DB")
-                    .setFooter({
-                        text: `Página ${pageIndex + 1} de ${maxPages} — Total items: ${items.length}`
-                    });
-
-                for (const item of pageItems) {
-                    embed.addFields({
-                        name: `${item.emoji} ${item.itemName} × ${item.amount}`,
-                        value: item.description || "Sin descripción.",
-                        inline: false
-                    });
-                }
-
-                return embed;
-            };
-
-            const getButtons = (pageIndex) => {
-                return new ActionRowBuilder<ButtonBuilder>().addComponents(
-                    new ButtonBuilder()
-                        .setCustomId("prev_page")
-                        .setLabel("⬅️")
-                        .setStyle(ButtonStyle.Secondary)
-                        .setDisabled(pageIndex === 0),
-
-                    new ButtonBuilder()
-                        .setCustomId("next_page")
-                        .setLabel("➡️")
-                        .setStyle(ButtonStyle.Secondary)
-                        .setDisabled(pageIndex === maxPages - 1)
-                );
-            };
-
-            // Enviar primera página
-            let msg = await safeReply(interaction, {
-                embeds: [getPageEmbed(page)],
-                components: [getButtons(page)]
+    if (pageItems.length > 0) {
+        for (const item of pageItems) {
+            embed.addFields({
+                name: `${item.emoji} ${item.itemName} (x${item.amount})`,
+                value: item.description || "Sin descripción",
+                inline: false
             });
-
-            // Crear collector de botones
-            const collector = msg.createMessageComponentCollector({
-                time: 60_000 // 1 minuto
-            });
-
-            collector.on("collect", async (btn) => {
-                if (btn.user.id !== interaction.user.id)
-                    return btn.reply({ content: "❌ No puedes usar estos botones.", ephemeral: true });
-
-                if (btn.customId === "prev_page") page--;
-                if (btn.customId === "next_page") page++;
-
-                await btn.update({
-                    embeds: [getPageEmbed(page)],
-                    components: [getButtons(page)]
-                });
-            });
-
-            collector.on("end", async () => {
-                if (!msg.editable) return;
-
-                msg.edit({
-                    components: [
-                        new ActionRowBuilder<ButtonBuilder>().addComponents(
-                            new ButtonBuilder()
-                                .setCustomId("disabled")
-                                .setLabel("⏱️ Tiempo expirado")
-                                .setStyle(ButtonStyle.Secondary)
-                                .setDisabled(true)
-                        )
-                    ]
-                }).catch(() => {});
-            });
-
-        } catch (err) {
-            console.error("❌ Error en inventario:", err);
-            return safeReply(interaction, "❌ Error al mostrar el inventario.");
         }
     }
-};
 
-export default command;
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(`inv/prev/${page}/${userId}/${targetUser.id}`)
+            .setLabel("⬅️")
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page === 0),
+
+        new ButtonBuilder()
+            .setCustomId(`inv/next/${page}/${userId}/${targetUser.id}`)
+            .setLabel("➡️")
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(page >= totalPages - 1)
+    );
+
+    return { embeds: [embed], components: [row] };
+}
+
+createCommand({
+    name: "inventario",
+    description: "Muestra tu inventario o el de otro usuario.",
+    type: ApplicationCommandType.ChatInput,
+    options: [
+        {
+            name: "usuario",
+            description: "Usuario a revisar",
+            type: ApplicationCommandOptionType.User
+        }
+    ],
+    async run(interaction) {
+        if (!interaction.guildId) return;
+        const target = interaction.options.getUser("usuario") || interaction.user;
+
+        const payload = await generateInventoryPayload(interaction.guildId, interaction.user.id, target, 0, interaction.client);
+        await safeReply(interaction, payload);
+    }
+});
+
+createResponder({
+    customId: "inv/:action/:page/:clickerId/:targetId",
+    types: [ResponderType.Button],
+    cache: "cached",
+    async run(interaction) {
+        const { action, page: pageStr, clickerId, targetId } = interaction.params;
+
+        if (interaction.user.id !== clickerId) {
+            await interaction.reply({ content: "❌ No puedes usar estos botones.", ephemeral: true });
+            return;
+        }
+
+        let page = parseInt(pageStr);
+        if (action === "prev") page--;
+        if (action === "next") page++;
+
+        let targetUser = interaction.client.users.cache.get(targetId);
+        if (!targetUser) targetUser = await interaction.client.users.fetch(targetId);
+
+        const payload = await generateInventoryPayload(interaction.guildId, clickerId, targetUser, page, interaction.client);
+        await interaction.update(payload);
+    }
+});

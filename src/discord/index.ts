@@ -1,3 +1,1 @@
-import { setupCreators } from "#base";
-
-export const { createCommand, createEvent, createResponder } = setupCreators();
+export { createCommand, createEvent, createResponder } from "#base";

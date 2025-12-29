@@ -5,6 +5,8 @@ export * from "./bootstrap.js";
 
 export { ResponderType, type GenericResponderInteraction } from "./responders/types.js";
 
-export * from "./creators.js";
+import { setupCreators } from "./creators.js";
 
-export * from "../index.js";
+export const { createCommand, createEvent, createResponder } = setupCreators();
+
+export * from "./app.js";

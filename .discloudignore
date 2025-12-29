@@ -1,0 +1,9 @@
+node_modules
+.git
+dashboard/node_modules
+logs
+.vscode
+*.md
+.gitignore
+tsup.config.ts
+tsconfig.json

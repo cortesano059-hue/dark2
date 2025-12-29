@@ -1,6 +1,7 @@
 import { bootstrap } from "#base";
+import { connectMongo } from "#database";
+import "#server";
+import "dotenv/config";
 
-console.log("GUILD_ID:", process.env.GUILD_ID);
-console.log("CLIENT_ID:", process.env.CLIENT_ID);
-
+await connectMongo();
 await bootstrap({ meta: import.meta });

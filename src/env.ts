@@ -1,28 +1,14 @@
+import { validateEnv } from "#base";
+import "dotenv/config";
 import { z } from "zod";
-import dotenv from "dotenv";
 
-dotenv.config();
-
-const envSchema = z.object({
-    BOT_TOKEN: z.string(),
-    CLIENT_ID: z.string(),
-    OWNER_ID: z.string(),
-
-    // Base de datos
-    MONGO_URI: z.string(),
-    MONGO_DB: z.string().default("darkdb"),
-    DATABASE_NAME: z.string().optional(), // ← requerida por tus archivos
-     
-    // Aplicación
-    GUILD_ID: z.string(),
-    PREFIX: z.string().optional(),
-
-    // Logs
-    DISCORD_LOG_WEBHOOK_ID: z.string().optional(),
-    DISCORD_LOG_WEBHOOK_TOKEN: z.string().optional(),
-    WEBHOOK_LOGS_URL: z.string().optional(), // ← requerida por base.error.ts
-
-    BASE_VERSION: z.string().default("1.4.11"),
-});
-
-export const env = envSchema.parse(process.env);
+export const env = validateEnv(z.object({
+    BOT_TOKEN: z.string("Discord Bot Token is required").min(1),
+    WEBHOOK_LOGS_URL: z.url().optional(),
+    GUILD_ID: z.string().optional(),
+    SERVER_PORT: z.coerce.number().min(1).optional(),
+    JWT_SECRET: z.string().default("super-secret-key"),
+    DISCORD_CLIENT_ID: z.string().optional(),
+    DISCORD_CLIENT_SECRET: z.string().optional(),
+    DASHBOARD_URL: z.string().url().default("http://localhost:5173")
+}));

@@ -1,56 +1,84 @@
-import {
-  SlashCommandBuilder,
-  PermissionFlagsBits,
-  ChatInputCommandInteraction,
-} from "discord.js";
-import ThemedEmbed from "@src/utils/ThemedEmbed";
-import eco from "@economy";
-import safeReply from "@src/utils/safeReply";
+import { createCommand } from "#base";
+import { ApplicationCommandOptionType, ApplicationCommandType, PermissionFlagsBits } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
+import { ThemedEmbed } from "../../../utils/ThemedEmbed.js";
+import * as eco from "../../../economy/index.js";
+import { logger } from "../../../utils/logger.js";
 
-export const data = new SlashCommandBuilder()
-  .setName("addmoney")
-  .setDescription("Añadir dinero a un usuario (Admin).")
-  .addUserOption((o) =>
-    o.setName("usuario").setDescription("Usuario").setRequired(true)
-  )
-  .addIntegerOption((o) =>
-    o.setName("cantidad").setDescription("Cantidad").setRequired(true)
-  )
-  .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
+createCommand({
+    name: "addmoney",
+    description: "Añadir dinero a un usuario (Admin).",
+    type: ApplicationCommandType.ChatInput,
+    defaultMemberPermissions: PermissionFlagsBits.Administrator,
+    options: [
+        {
+            name: "usuario",
+            description: "Usuario",
+            type: ApplicationCommandOptionType.User,
+            required: true
+        },
+        {
+            name: "cantidad",
+            description: "Cantidad",
+            type: ApplicationCommandOptionType.Integer,
+            required: true
+        },
+        {
+            name: "destino",
+            description: "Destino del dinero",
+            type: ApplicationCommandOptionType.String,
+            choices: [
+                { name: "Dinero en mano", value: "money" },
+                { name: "Banco", value: "bank" }
+            ],
+            required: true
+        }
+    ],
+    async run(interaction) {
+        await interaction.deferReply({});
+        try {
+            const targetUser = interaction.options.getUser("usuario");
+            const destination = interaction.options.getString("destino");
+            const guildId = interaction.guildId;
 
-export async function execute(interaction: ChatInputCommandInteraction): Promise<void> {
-  await interaction.deferReply({});
-  try {
-    const targetUser = interaction.options.getUser("usuario", true);
-    const guildId = interaction.guildId || "";
-    const member = interaction.guild?.members.cache.get(targetUser.id);
+            if (!targetUser || !guildId || !destination) return;
 
-    const amount = interaction.options.getInteger("cantidad", true);
-    if (amount <= 0)
-      return safeReply(
-        interaction,
-        { embeds: [ThemedEmbed.error("Error", "Cantidad inválida.")] }
-      );
+            const amount = interaction.options.getInteger("cantidad");
+            if (!amount || amount <= 0) {
+                if (!targetUser) return safeReply(interaction, { embeds: [ThemedEmbed.error('Error', 'Usuario no encontrado.')] });
+                return;
+            }
 
-    await eco.addMoney(targetUser.id, guildId, amount);
-    const balance = await eco.getBalance(targetUser.id, guildId);
+            let actionSuccess = false;
 
-    const embed = new ThemedEmbed(interaction)
-      .setTitle("💰 Dinero Añadido")
-      .setDescription(`Se han añadido **$${amount}** a ${targetUser.tag}.`)
-      .addFields(
-        { name: "Dinero en Mano", value: `$${balance.money}`, inline: true },
-        { name: "Dinero en Banco", value: `$${balance.bank}`, inline: true }
-      )
-      .setThumbnail((member || targetUser).displayAvatarURL?.() ?? targetUser.displayAvatarURL())
-      .setColor("#2ecc71");
+            if (destination === "money") {
+                actionSuccess = await eco.addMoney(targetUser.id, guildId, amount, 'admin_addmoney');
+            } else if (destination === "bank") {
+                actionSuccess = await eco.addBank(targetUser.id, guildId, amount, 'admin_addbank');
+            }
 
-    return safeReply(interaction, { embeds: [embed] });
-  } catch (err) {
-    console.error("❌ ERROR EN COMANDO addmoney.ts:", err);
-    return safeReply(
-      interaction,
-      { embeds: [ThemedEmbed.error("Error", "No se pudo añadir el dinero.")] }
-    );
-  }
-}
+            if (!actionSuccess) {
+                await safeReply(interaction, ThemedEmbed.error('Error', 'No se pudo añadir el dinero.'));
+                return;
+            }
+
+            const balance = await eco.getBalance(targetUser.id, guildId);
+
+            const embed = new ThemedEmbed(interaction)
+                .setTitle('💰 Dinero Añadido')
+                .setDescription(`Se han añadido **$${amount.toLocaleString()}** a ${targetUser} en su **${destination === "money" ? "cartera" : "banco"}**.`)
+                .addFields(
+                    { name: 'Dinero en Mano', value: `$${(balance.money ?? 0).toLocaleString()}`, inline: true },
+                    { name: 'Dinero en Banco', value: `$${(balance.bank ?? 0).toLocaleString()}`, inline: true }
+                )
+                .setThumbnail(targetUser.displayAvatarURL({ forceStatic: false }))
+                .setColor('#2ecc71');
+
+            await safeReply(interaction, { embeds: [embed] });
+
+        } catch (err: any) {
+            console.error('❌ ERROR EN COMANDO addmoney.ts:', err);
+            await safeReply(interaction, ThemedEmbed.error('Error', 'No se pudo añadir el dinero.'));
+        }
+    }
+});

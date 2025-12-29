@@ -26,4 +26,8 @@ export class EventManager {
             "event ✓",
         )));
     }
+    public clear() {
+        this.collection.clear();
+        this.logs.length = 0;
+    }
 }

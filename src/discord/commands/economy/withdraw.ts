@@ -1,54 +1,64 @@
-import { SlashCommandBuilder, ChatInputCommandInteraction } from "discord.js";
-import eco from "@economy";
-import safeReply from "@src/utils/safeReply";
-import MyClient from "@structures/MyClient.js";
+import { createCommand } from "#base";
+import { ApplicationCommandOptionType, ApplicationCommandType } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
+import * as eco from "../../../economy/index.js";
 
-export default {
-    data: new SlashCommandBuilder()
-        .setName("withdraw")
-        .setDescription("Retira dinero del banco.")
-        .addStringOption(option =>
-            option.setName("cantidad")
-                .setDescription("Cantidad o 'all'")
-                .setRequired(true)
-        ),
-
-    async execute(interaction: ChatInputCommandInteraction, client: MyClient): Promise<void> {
+createCommand({
+    name: "withdraw",
+    description: "Retira dinero del banco.",
+    type: ApplicationCommandType.ChatInput,
+    options: [
+        {
+            name: "cantidad",
+            description: "Cantidad o 'all'",
+            type: ApplicationCommandOptionType.String,
+            required: true
+        }
+    ],
+    async run(interaction) {
         await interaction.deferReply({ ephemeral: true });
 
-        const guildId = interaction.guild!.id;
+        const guildId = interaction.guildId;
         const userId = interaction.user.id;
+        if (!guildId) return;
 
-        const raw = interaction.options.getString("cantidad")!;
+        const raw = interaction.options.getString("cantidad");
+        if (!raw) return;
 
         const bal = await eco.getBalance(userId, guildId);
-        if (!bal)
-            return safeReply(interaction, "❌ No se pudo obtener tu balance.");
+        if (!bal) {
+            await safeReply(interaction, "❌ No se pudo obtener tu balance.", true);
+            return;
+        }
 
         let amount: number;
 
         if (raw.toLowerCase() === "all") {
-            if (bal.bank <= 0)
-                return safeReply(interaction, "❌ No tienes dinero en el banco.");
-
-            amount = bal.bank;
+            if ((bal.bank || 0) <= 0) {
+                await safeReply(interaction, "❌ No tienes dinero en el banco.", true);
+                return;
+            }
+            amount = Number(bal.bank);
         } else {
             amount = Number(raw);
-            if (isNaN(amount) || amount <= 0)
-                return safeReply(interaction, "❌ Ingresa una cantidad válida.");
+            if (isNaN(amount) || amount <= 0) {
+                await safeReply(interaction, "❌ Ingresa una cantidad válida.", true);
+                return;
+            }
         }
 
         const result = await eco.withdraw(userId, guildId, amount);
 
-        if (!result.success)
-            return safeReply(interaction, "❌ No tienes suficiente dinero en el banco.");
+        if (!result.success) {
+            await safeReply(interaction, "❌ No tienes suficiente dinero en el banco.", true);
+            return;
+        }
 
         const newBal = await eco.getBalance(userId, guildId);
 
-        return safeReply(interaction, {
+        await safeReply(interaction, {
             content: `🏦 Has retirado **$${amount.toLocaleString()}**.\n` +
-                     `💵 Ahora tienes **$${newBal.money.toLocaleString()}** en mano.`
-        });
+                `💵 Ahora tienes **$${Number(newBal.money).toLocaleString()}** en mano.`
+        }, true);
     }
-};
-
+});

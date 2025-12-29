@@ -29,6 +29,12 @@ export class CommandManager {
     }
     public clear() {
         this.collection.clear();
+        this.logs.length = 0;
+    }
+    public reset() {
+        this.clear();
+        this.commandRunners.clear();
+        this.autocompleteRunners.clear();
     }
     public getAutocompleteHandler(...path: (string | null)[]) {
         const commandName = path[0];
@@ -64,7 +70,7 @@ export class CommandManager {
                 "autocomplete" in option &&
                 option.autocomplete &&
                 typeof option.autocomplete === "function"
-            ){
+            ) {
                 this.autocompleteRunners.set(
                     `${path}/${option.name}`,
                     option.autocomplete
@@ -79,7 +85,7 @@ export class CommandManager {
                         ...data, description,
                         options: this.buildOptions(
                             subcommands, `${path}/${data.name}`
-                        ) as ApplicationCommandSubCommandData[]
+                        ) as any
                     });
                     continue;
                 }
@@ -110,8 +116,8 @@ export class CommandManager {
 
                     const extra = autocomplete
                         ? { autocomplete: true, ...validation }
-                        : choices?.length 
-                            ? { choices: choices.slice(0, 25) } 
+                        : choices?.length
+                            ? { choices: choices.slice(0, 25) }
                             : validation;
 
                     resolved.push(Object.assign({
@@ -145,10 +151,10 @@ export class CommandManager {
                         type: ApplicationCommandOptionType.Subcommand as const,
                     })),
                     ...subcommands.filter(
-                        sub => sub.group === group.name
+                        (sub: any) => sub.type === ApplicationCommandOptionType.Subcommand && sub.group === group.name
                     )
                 ]
-                resolved.push({ ...group, options: data });
+                resolved.push({ ...group, options: data } as any);
 
                 for (const subcommand of data) {
                     this.commandRunners.set(
@@ -158,12 +164,12 @@ export class CommandManager {
                 }
             };
         }
-        for (const subcommand of subcommands.filter(sub => !sub.group)) {
+        for (const subcommand of subcommands.filter((sub: any) => !sub.group)) {
             this.commandRunners.set(
                 `${path}/${subcommand.name}`,
                 [run, subcommand.run]
             );
-            resolved.push(subcommand);
+            resolved.push(subcommand as any);
         }
         return resolved;
     }
@@ -205,7 +211,7 @@ export class CommandManager {
                     ? {
                         description: description ?? data.name,
                         descriptionLocalizations,
-                        ...(buildedOptions.length >= 1 
+                        ...(buildedOptions.length >= 1
                             ? { options: buildedOptions }
                             : {}
                         )

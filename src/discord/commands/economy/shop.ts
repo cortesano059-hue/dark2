@@ -1,0 +1,20 @@
+import { createCommand } from "#base";
+import { ApplicationCommandType } from "discord.js";
+import { safeReply } from "../../../utils/safeReply.js";
+createCommand({
+    name: "shop",
+    description: "Abre la tienda del servidor.",
+    type: ApplicationCommandType.ChatInput,
+    async run(interaction) {
+        if (!interaction.guildId) return;
+
+        // Dynamic import for hot-reload support
+        const { generateShopPayload } = await import(`../../../utils/shopUtils.js?t=${Date.now()}`);
+
+        // Generar payload página 0
+        const payload = await generateShopPayload(interaction.guildId, 0, interaction.user.id);
+
+        // Se puede enviar ephemeral o public. La original era ephemeral: true
+        await safeReply(interaction, payload as any);
+    }
+});

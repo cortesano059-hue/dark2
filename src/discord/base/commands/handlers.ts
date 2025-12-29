@@ -70,11 +70,10 @@ export abstract class BaseCommandHandlers {
     }
     public static async register(client: Client<true>) {
         const app = Constatic.getInstance();
+        const commands = app.commands.build();
         const messages: string[] = [];
 
         const pluralize = (value: number) => value > 1 ? "s" : "";
-
-        const commands = app.commands.build();
 
         const createVerboseLogs = (commands: Collection<string, ApplicationCommand>) =>
             commands.map(({ id, name, type, client, createdAt, guild }) => {
@@ -116,7 +115,7 @@ export abstract class BaseCommandHandlers {
                         if (!commands.size) return;
                         logRegistration(commands, "globally")
                     }
-                ),
+                    ),
                 ...targetGuilds.map(async (guild) => {
                     const commands = await guild.commands.set(guildCommands);
                     logRegistration(commands, `in ${ck.underline(guild.name)} guild`);
@@ -127,13 +126,11 @@ export abstract class BaseCommandHandlers {
                 .then(commands =>
                     logRegistration(commands, "globally")
                 );
-            
+
             client.guilds.cache.forEach(g => g.commands
                 .set([]).catch(() => null)
             );
         }
-
-        app.commands.clear();
 
         if (messages.length) {
             console.log(brBuilder(messages));

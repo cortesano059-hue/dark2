@@ -4,31 +4,35 @@ import chalk from "chalk";
 import { spaceBuilder } from "@magicyan/discord";
 
 export class ResponderManager {
-    private readonly router = createRouter<GenericResponderData>();
+    private router = createRouter<GenericResponderData>();
 
     public readonly logs: string[] = [];
 
-    private withLeadingSlash(path: string){
+    private withLeadingSlash(path: string) {
         return path.startsWith("/") ? path : `/${path}`
     };
 
-    public add(data: GenericResponderData){
+    public add(data: GenericResponderData) {
         const customId = this.withLeadingSlash(data.customId);
-        for(const type of new Set(data.types)){
+        for (const type of new Set(data.types)) {
             addRoute(this.router, type, customId, { ...data, customId });
         };
         return data;
     }
-    public addLogs(data: GenericResponderData){
-        for(const type of new Set(data.types)){
+    public addLogs(data: GenericResponderData) {
+        for (const type of new Set(data.types)) {
             this.logs.push(chalk.green(spaceBuilder(
                 chalk.greenBright(`▸ ${type}`),
-                chalk.gray(">"), 
-                chalk.underline.blue(data.customId),"✓"
+                chalk.gray(">"),
+                chalk.underline.blue(data.customId), "✓"
             )));
         };
     }
-    public getHandler(type: ResponderType, customId: string){
+    public getHandler(type: ResponderType, customId: string) {
         return findRoute(this.router, type.toUpperCase(), this.withLeadingSlash(customId));
+    }
+    public clear() {
+        this.router = createRouter<GenericResponderData>();
+        this.logs.length = 0;
     }
 }
