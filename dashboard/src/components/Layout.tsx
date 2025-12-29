@@ -29,7 +29,7 @@ export const Layout: React.FC<LayoutProps> = ({ children, hideSidebar = false })
                         <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-500/5 rounded-full blur-[100px]" />
                     </div>
 
-                    <div className="relative z-20">
+                    <div className="relative z-20 min-h-full flex flex-col">
                         {children}
                     </div>
                 </main>

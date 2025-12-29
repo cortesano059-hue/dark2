@@ -36,7 +36,7 @@ export const Profile = () => {
             .finally(() => setLoading(false));
     }, [authUser]);
 
-    if (loading) return <div className="flex items-center justify-center h-full"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
+    if (loading) return <div className="flex-1 flex items-center justify-center min-h-[50vh]"><Loader2 className="w-12 h-12 text-primary animate-spin" /></div>;
     if (!user) return <div className="text-center py-20">No se encontró el perfil.</div>;
 
     const total = user.money + user.bank;

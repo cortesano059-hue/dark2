@@ -86,7 +86,7 @@ export const Backpacks = () => {
 
     if (loading) {
         return (
-            <div className="h-full flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center min-h-[50vh]">
                 <Loader2 className="w-8 h-8 text-primary animate-spin" />
             </div>
         );
